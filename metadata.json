@@ -1,0 +1,8 @@
+{
+  "name": "EthosMatch | TalentFlow",
+  "description": "An ethical AI-powered recruitment platform with advanced audio, visual, and reasoning capabilities.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
