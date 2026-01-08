@@ -1,16 +1,16 @@
 
 import React from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
-import { Layout } from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import CandidateMatcher from './pages/CandidateMatcher';
-import EthicalInsights from './pages/EthicalInsights';
-import CandidateTracker from './pages/CandidateTracker';
-import JobBrowser from './pages/JobBrowser';
-import AssessmentCenter from './pages/AssessmentCenter';
-import CandidateJourney from './pages/CandidateJourney';
-import HackathonPortal from './pages/HackathonPortal';
-import PostJob from './pages/PostJob';
+import { Layout } from 'E:/ethos/components/Layout';
+import Dashboard from 'E:/ethos/pages/Dashboard';
+import CandidateMatcher from 'E:/ethos/pages/CandidateMatcher';
+import EthicalInsights from 'E:/ethos/pages/EthicalInsights';
+import CandidateTracker from 'E:/ethos/pages/CandidateTracker';
+import JobBrowser from 'E:/ethos/pages/JobBrowser';
+import AssessmentCenter from 'E:/ethos/pages/AssessmentCenter';
+import CandidateJourney from 'E:/ethos/pages/CandidateJourney';
+import HackathonPortal from 'E:/ethos/pages/HackathonPortal';
+import PostJob from 'E:/ethos/pages/PostJob';
 
 const MarketTrends = () => (
   <div className="p-8 bg-white rounded-2xl border border-slate-100 shadow-sm text-center">

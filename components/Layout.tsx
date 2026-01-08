@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   BarChart3, 
@@ -34,6 +34,7 @@ const SidebarLink = ({ to, icon: Icon, label, active }: { to: string, icon: any,
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [role, setRole] = useState<'recruiter' | 'candidate'>('recruiter');
 
   useEffect(() => {
