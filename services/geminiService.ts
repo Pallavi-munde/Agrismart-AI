@@ -55,6 +55,21 @@ export async function getCropRecommendation(data: SoilData, imageBase64?: string
   return JSON.parse(response.text);
 }
 
+export async function getLocationOutlook(lat: number, lng: number, soilData: SoilData): Promise<string> {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: `Based on current coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)}) and soil health (N:${soilData.n}, P:${soilData.p}, K:${soilData.k}, Moisture:${soilData.moisture.toFixed(0)}%), provide a rapid agricultural outlook. Mention local weather trends or seasonal suitability for this specific area.`,
+    config: {
+      systemInstruction: SHARED_SYSTEM_INSTRUCTION,
+      tools: [{ googleSearch: {} }]
+    }
+  });
+
+  return response.text || "Unable to retrieve localized intelligence at this moment.";
+}
+
 export async function agriculturalChat(message: string, history: { role: 'user' | 'assistant', content: string }[]) {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const chat = ai.chats.create({

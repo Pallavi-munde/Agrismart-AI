@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { SoilData, AdBanner } from '../../types';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { MOCK_CHART_DATA, INITIAL_ADS } from '../../constants';
+import { getLocationOutlook } from '../../services/geminiService';
 
 interface DashboardProps {
   soilData: SoilData;
@@ -34,6 +35,9 @@ const SensorCard: React.FC<{ label: string, value: string | number, unit: string
 const FarmerDashboard: React.FC<DashboardProps> = ({ soilData }) => {
   const [ads, setAds] = useState<AdBanner[]>([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [outlook, setOutlook] = useState<string | null>(null);
+  const [isOutlookLoading, setIsOutlookLoading] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'locating' | 'fetching' | 'success' | 'error'>('idle');
 
   const radarData = useMemo(() => [
     { subject: 'Nitrogen', A: (soilData.n / 100) * 100, fullMark: 100 },
@@ -60,6 +64,47 @@ const FarmerDashboard: React.FC<DashboardProps> = ({ soilData }) => {
     }, 5000);
     return () => clearInterval(timer);
   }, [ads]);
+
+  const fetchLocalizedOutlook = () => {
+    if (!navigator.geolocation) {
+      setOutlook("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setLocationStatus('locating');
+    setIsOutlookLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        setLocationStatus('fetching');
+        try {
+          const res = await getLocationOutlook(
+            position.coords.latitude,
+            position.coords.longitude,
+            soilData
+          );
+          setOutlook(res);
+          setLocationStatus('success');
+        } catch (err) {
+          console.error(err);
+          setOutlook("Failed to connect to AI uplink for your coordinates.");
+          setLocationStatus('error');
+        } finally {
+          setIsOutlookLoading(false);
+        }
+      },
+      (error) => {
+        console.warn("Location error:", error);
+        setOutlook("Location access denied. Please enable GPS for personalized insights.");
+        setLocationStatus('error');
+        setIsOutlookLoading(false);
+      }
+    );
+  };
+
+  useEffect(() => {
+    fetchLocalizedOutlook();
+  }, []);
 
   const handleAdClick = (ad: AdBanner) => {
     const allAds = JSON.parse(localStorage.getItem('agri_ads') || '[]');
@@ -121,17 +166,43 @@ const FarmerDashboard: React.FC<DashboardProps> = ({ soilData }) => {
 
         <div className="bg-emerald-950 rounded-[2rem] p-8 text-white flex flex-col justify-between overflow-hidden relative min-h-[350px] shadow-2xl group">
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 bg-emerald-400/10 rounded-full blur-[80px] group-hover:scale-110 transition-transform duration-700"></div>
-          <div className="relative z-10">
-            <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center mb-6 text-emerald-400 animate-pulse">
-              <i className="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+          <div className="relative z-10 h-full flex flex-col">
+            <div className="flex justify-between items-start mb-6">
+              <div className="w-14 h-14 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 animate-pulse">
+                <i className="fa-solid fa-wand-magic-sparkles text-2xl"></i>
+              </div>
+              {locationStatus === 'success' && (
+                <span className="text-[8px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/30">
+                  <i className="fa-solid fa-location-dot mr-1"></i> Localized
+                </span>
+              )}
             </div>
+            
             <h3 className="text-2xl font-black mb-3 tracking-tighter uppercase">AI Outlook</h3>
-            <p className="text-emerald-100/70 text-sm leading-relaxed mb-8 font-medium italic">
-              "Your field shows high potential for sustainable rotation. The upcoming weather windows suggest nitrogen-fixing legumes would thrive in Plot C."
-            </p>
+            
+            <div className="flex-1 flex flex-col justify-center">
+              {isOutlookLoading ? (
+                <div className="space-y-4">
+                  <div className="h-4 bg-white/10 rounded-full w-full animate-pulse"></div>
+                  <div className="h-4 bg-white/10 rounded-full w-3/4 animate-pulse"></div>
+                  <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest text-center mt-4">
+                    {locationStatus === 'locating' ? 'Determining GPS Coordinates...' : 'Querying Global Mandi & Weather...'}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-emerald-100/70 text-sm leading-relaxed mb-8 font-medium italic animate-pop">
+                  "{outlook || 'Initializing localized agricultural telemetry...'}"
+                </p>
+              )}
+            </div>
           </div>
-          <button className="relative z-10 bg-emerald-500 text-emerald-950 font-black uppercase tracking-widest text-xs py-4 rounded-2xl hover:bg-white active:scale-95 transition-all shadow-xl shadow-emerald-950/20">
-            Analyze Season Cycle
+          <button 
+            onClick={fetchLocalizedOutlook}
+            disabled={isOutlookLoading}
+            className="relative z-10 bg-emerald-500 text-emerald-950 font-black uppercase tracking-widest text-xs py-4 rounded-2xl hover:bg-white active:scale-95 transition-all shadow-xl shadow-emerald-950/20 flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isOutlookLoading ? <i className="fa-solid fa-circle-notch fa-spin"></i> : <i className="fa-solid fa-satellite"></i>}
+            Refresh Local Intel
           </button>
         </div>
       </div>
