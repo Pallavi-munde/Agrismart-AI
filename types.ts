@@ -39,6 +39,8 @@ export interface SoilData {
   temperature: number;
   humidity: number;
   rainfall: number;
+  soilType?: string;
+  organicMatter?: number;
 }
 
 export interface PredictionResult {
@@ -47,6 +49,9 @@ export interface PredictionResult {
   description: string;
   plantingSeason: string;
   yieldEstimate: string;
+  sustainabilityScore: number;
+  nutrientRecommendation: string;
+  visualAnalysis?: string;
 }
 
 export interface MarketRate {

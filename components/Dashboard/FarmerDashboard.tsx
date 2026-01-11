@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SoilData, AdBanner } from '../../types';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { MOCK_CHART_DATA, INITIAL_ADS } from '../../constants';
 
 interface DashboardProps {
@@ -35,6 +35,14 @@ const FarmerDashboard: React.FC<DashboardProps> = ({ soilData }) => {
   const [ads, setAds] = useState<AdBanner[]>([]);
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
 
+  const radarData = useMemo(() => [
+    { subject: 'Nitrogen', A: (soilData.n / 100) * 100, fullMark: 100 },
+    { subject: 'Phosphorus', A: (soilData.p / 100) * 100, fullMark: 100 },
+    { subject: 'Potassium', A: (soilData.k / 100) * 100, fullMark: 100 },
+    { subject: 'pH Balance', A: (soilData.ph / 14) * 100, fullMark: 100 },
+    { subject: 'Moisture', A: soilData.moisture, fullMark: 100 },
+  ], [soilData]);
+
   useEffect(() => {
     const savedAds = localStorage.getItem('agri_ads');
     if (savedAds) {
@@ -45,7 +53,6 @@ const FarmerDashboard: React.FC<DashboardProps> = ({ soilData }) => {
     }
   }, []);
 
-  // Auto-sliding Carousel logic
   useEffect(() => {
     if (ads.length <= 1) return;
     const timer = setInterval(() => {
@@ -73,37 +80,43 @@ const FarmerDashboard: React.FC<DashboardProps> = ({ soilData }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 group transition-all">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h3 className="text-xl font-black text-slate-800 tracking-tight">Ecosystem Trends</h3>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Simulated 7-Day Forecast</p>
-            </div>
-            <div className="flex gap-4">
-              <span className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400"><span className="w-2 h-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span> Rainfall</span>
-              <span className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400"><span className="w-2 h-2 rounded-full bg-orange-400 shadow-lg shadow-orange-200"></span> Temperature</span>
-            </div>
-          </div>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_CHART_DATA}>
-                <defs>
-                  <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
-                <YAxis hide />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                />
-                <Area type="monotone" dataKey="rain" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorRain)" />
-                <Area type="monotone" dataKey="temp" stroke="#fb923c" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
+             <div className="mb-6">
+               <h3 className="text-xl font-black text-slate-800 tracking-tight">Rainfall Forecast</h3>
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Simulated 7-Day Cycle</p>
+             </div>
+             <div className="h-[200px]">
+               <ResponsiveContainer width="100%" height="100%">
+                 <AreaChart data={MOCK_CHART_DATA}>
+                   <defs>
+                     <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
+                       <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                       <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                     </linearGradient>
+                   </defs>
+                   <XAxis dataKey="name" hide />
+                   <Area type="monotone" dataKey="rain" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRain)" />
+                 </AreaChart>
+               </ResponsiveContainer>
+             </div>
+           </div>
+
+           <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center">
+             <div className="w-full mb-4">
+                <h3 className="text-xl font-black text-slate-800 tracking-tight">Nutrient Balance</h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Live Soil Profile</p>
+             </div>
+             <div className="h-[200px] w-full">
+               <ResponsiveContainer width="100%" height="100%">
+                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                   <PolarGrid stroke="#f1f5f9" />
+                   <PolarAngleAxis dataKey="subject" tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
+                   <Radar name="Soil" dataKey="A" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
+                 </RadarChart>
+               </ResponsiveContainer>
+             </div>
+           </div>
         </div>
 
         <div className="bg-emerald-950 rounded-[2rem] p-8 text-white flex flex-col justify-between overflow-hidden relative min-h-[350px] shadow-2xl group">
